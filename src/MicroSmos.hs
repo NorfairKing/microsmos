@@ -6,6 +6,7 @@ module MicroSmos
 
 import Data.Maybe
 
+import qualified Data.ByteString as SB
 import qualified Data.Text as T
 import Data.Text (Text)
 import qualified Data.Text.IO as T
@@ -17,6 +18,9 @@ import Cursor.Text
 import Cursor.Tree
 
 import Data.Tree
+import Data.Yaml as Yaml
+
+import Path.IO
 
 import Brick as Brick
 import Brick.Main as Brick
@@ -29,10 +33,23 @@ import Graphics.Vty.Input.Events as Vty
 
 microSmos :: IO ()
 microSmos = do
-  let tc = singletonTreeCursor emptyTextCursor
-  _ <- Brick.defaultMain microSmosApp tc
-  pure ()
-  -- TODO persist the tree
+  (file:_) <- getArgs
+  errOrContents <- forgivingAbsence $ SB.readFile file
+  tc <-
+    case errOrContents of
+      Nothing -> pure $ singletonTreeCursor emptyTextCursor
+      Just contents ->
+        case Yaml.decodeEither' contents of
+          Left err -> die $ "Failed to read tree file: " <> prettyPrintParseException err
+          Right tree -> pure $ makeTreeCursor toTextCursor (cTree True (tree :: Tree Text))
+  tc' <- Brick.defaultMain microSmosApp tc
+  SB.writeFile file $ Yaml.encode $ rebuildCTree $ rebuildTreeCursor toText tc'
+
+toTextCursor :: Text -> TextCursor
+toTextCursor = fromMaybe (error "Wasn't a single line") . makeTextCursor
+
+toText :: TextCursor -> Text
+toText = rebuildTextCursor
 
 type State = TreeCursor TextCursor Text
 
@@ -57,6 +74,7 @@ handleEvent tc e =
         EvKey key mods ->
           let mDo func = continue . fromMaybe tc $ func tc
            in case key of
+                KEsc -> halt tc
                 _ -> continue tc
         _ -> continue tc
     _ -> continue tc

@@ -1,0 +1,54 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.1.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 64bce0b4831694273f3f44805e2a71166811cac4f4db028a190e8777b954aa63
+
+name:           microsmos
+version:        0.0.0.0
+description:    Please see the README on GitHub at <https://github.com/NorfairKing/microsmos#readme>
+homepage:       https://github.com/NorfairKing/microsmos#readme
+bug-reports:    https://github.com/NorfairKing/microsmos/issues
+author:         Tom Sydney Kerckhove
+maintainer:     syd@cs-syd.eu
+copyright:      Copyright: (c) 2019 Tom Sydney Kerckhove
+license:        AllRightsReserved
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/NorfairKing/microsmos
+
+library
+  exposed-modules:
+      MicroSmos
+  other-modules:
+      Paths_microsmos
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+    , brick
+    , bytestring
+    , containers
+    , cursor
+    , directory
+    , path-io
+    , text
+    , vty
+    , yaml
+  default-language: Haskell2010
+
+executable microsmos
+  main-is: Main.hs
+  other-modules:
+      Paths_microsmos
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , microsmos
+  default-language: Haskell2010
