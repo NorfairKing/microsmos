@@ -152,17 +152,7 @@ draw s =
           wrapAboveFunc (reverse treeAboveLefts) treeAboveNode treeAboveRights
     cur :: TextCursor -> CForest Text -> Widget ResourceName
     cur tc cf =
-      let ecw =
-            withAttr selectedAttr $
-            (str "> " <+>) $
-            visible .
-            (case stateMode s of
-               EditText -> showCursor TextResource (Brick.Location (textCursorIndex tc, 0))
-               EditTree -> id) $
-            txt $
-            case rebuildTextCursor tc of
-              "" -> " "
-              t -> t
+      let ecw = withAttr selectedAttr $ (str "> " <+>) $ drawTextCursor tc
           rest = padLeft defaultPadding $ drawCForest cf
        in vBox [ecw, rest]
     wrap :: [CTree Text] -> Text -> [CTree Text] -> Widget n -> Widget n
@@ -171,6 +161,16 @@ draw s =
           ew = txt e
           afters = map drawTextCTree tsr
        in (str "- " <+> ew) <=> padLeft defaultPadding (vBox $ concat [befores, [w], afters])
+    drawTextCursor :: TextCursor -> Widget ResourceName
+    drawTextCursor tc =
+      visible .
+      (case stateMode s of
+         EditText -> showCursor TextResource (Brick.Location (textCursorIndex tc, 0))
+         EditTree -> id) $
+      txt $
+      case rebuildTextCursor tc of
+        "" -> " "
+        t -> t
 
 drawCForest :: CForest Text -> Widget n
 drawCForest cf =
