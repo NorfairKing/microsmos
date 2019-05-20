@@ -151,15 +151,19 @@ draw s =
           wrapAbove treeAboveAbove .
           wrapAboveFunc (reverse treeAboveLefts) treeAboveNode treeAboveRights
     cur :: TextCursor -> CForest Text -> Widget ResourceName
-    cur ec cf =
-      let ecw = withAttr selectedAttr $ str "> " <+> drawTextCursor ec
-          rest =
-            case cf of
-              EmptyCForest -> emptyWidget
-              ClosedForest _ -> emptyWidget
-              OpenForest ts ->
-                let etws = map drawTextCTree $ NE.toList ts
-                 in padLeft defaultPadding (vBox etws)
+    cur tc cf =
+      let ecw =
+            withAttr selectedAttr $
+            (str "> " <+>) $
+            visible .
+            (case stateMode s of
+               EditText -> showCursor TextResource (Brick.Location (textCursorIndex tc, 0))
+               EditTree -> id) $
+            txt $
+            case rebuildTextCursor tc of
+              "" -> " "
+              t -> t
+          rest = padLeft defaultPadding $ drawCForest cf
        in vBox [ecw, rest]
     wrap :: [CTree Text] -> Text -> [CTree Text] -> Widget n -> Widget n
     wrap tsl e tsr w =
@@ -168,24 +172,17 @@ draw s =
           afters = map drawTextCTree tsr
        in (str "- " <+> ew) <=> padLeft defaultPadding (vBox $ concat [befores, [w], afters])
 
-drawTextCTree :: CTree Text -> Widget n
-drawTextCTree (CNode t cf) =
-  str "- " <+>
+drawCForest :: CForest Text -> Widget n
+drawCForest cf =
   case cf of
-    EmptyCForest -> txt t
-    ClosedForest _ -> txt t
+    EmptyCForest -> emptyWidget
+    ClosedForest _ -> emptyWidget
     OpenForest ts ->
-      let ew = txt t
-          etws = map drawTextCTree $ NE.toList ts
-       in ew <=> padLeft defaultPadding (vBox etws)
+      let etws = map drawTextCTree $ NE.toList ts
+       in vBox etws
 
-drawTextCursor :: TextCursor -> Widget ResourceName
-drawTextCursor tc =
-  visible . showCursor TextResource (Brick.Location (textCursorIndex tc, 0)) $
-  txt $
-  case rebuildTextCursor tc of
-    "" -> " "
-    t -> t
+drawTextCTree :: CTree Text -> Widget n
+drawTextCTree (CNode t cf) = vBox [hBox [str "- ", txt t], padLeft defaultPadding (drawCForest cf)]
 
 nodeAttr :: AttrName
 nodeAttr = "node"
